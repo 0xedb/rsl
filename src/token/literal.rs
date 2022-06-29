@@ -1,0 +1,10 @@
+pub const Invalid: char = '💩';
+pub const EndOfInput: char = '\0';
+pub const Assign: char = '=';
+pub const Plus: char = '+';
+pub const Comma: char = ',';
+pub const Semicolon: char = ';';
+pub const LeftCurly: char = '{';
+pub const RightCurly: char = '}';
+pub const LeftParen: char = '(';
+pub const RightParen: char = ')';
