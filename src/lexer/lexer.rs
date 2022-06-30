@@ -37,25 +37,47 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn next_token(&mut self) -> Token {
-        use literal::*;
+    fn is_letter(ch: char) -> bool {
+        ch >= 'a' && ch <= 'z' || ch >= 'A' && ch <= 'Z'
+    }
 
+    fn read_identifier(&mut self) -> &str {
+        let pos = self.current;
+
+        while Lexer::is_letter(self.input.chars().nth(self.current).unwrap()) {
+            self.read_char()
+        }
+
+        &self.input[pos..self.current]
+    }
+
+    fn is_digit(ch: char) -> bool {
+        ch >= '0' && ch <= '9'
+    }
+
+    fn next_token(&mut self) -> Token {
         let mut tok = Token::default();
 
         self.eat_whitespace();
 
         match self.ch {
-            Plus => tok = Token::Plus,
-            Comma => tok = Token::Comma,
-            Assign => tok = Token::Assign,
-            Semicolon => tok = Token::Semicolon,
-            LeftCurly => tok = Token::LeftCurly,
-            RightCurly => tok = Token::RightCurly,
-            LeftParen => tok = Token::LeftParen,
-            RightParen => tok = Token::RightParen,
+            literal::Plus => tok = Token::Plus,
+            literal::Comma => tok = Token::Comma,
+            literal::Assign => tok = Token::Assign,
+            literal::Semicolon => tok = Token::Semicolon,
+            literal::LeftCurly => tok = Token::LeftCurly,
+            literal::RightCurly => tok = Token::RightCurly,
+            literal::LeftParen => tok = Token::LeftParen,
+            literal::RightParen => tok = Token::RightParen,
+            literal::EndOfInput => (),
+            ch => {
+                if Lexer::is_letter(ch) {
+                    let identifier = self.read_identifier();
 
-            EndOfInput => (),
-            _ => (),
+                    tok = Token::Identifier(identifier.to_owned());
+                } else if Lexer::is_digit(ch) {
+                }
+            }
         }
 
         self.read_char();
@@ -73,13 +95,21 @@ mod tests {
     #[test]
     fn test_lexer() -> Result<(), String> {
         let mut lx = Lexer::new(
-            r#"
+            r#"let
                 =+(){},;
             "#,
         );
 
         let input_tokens = vec![
-            Assign, Plus, LeftParen, RightParen, LeftCurly, RightCurly, Comma, Semicolon,
+            Identifier(String::from("let")),
+            Assign,
+            Plus,
+            LeftParen,
+            RightParen,
+            LeftCurly,
+            RightCurly,
+            Comma,
+            Semicolon,
             EndOfInput,
         ];
 
@@ -89,7 +119,7 @@ mod tests {
         while tok != EndOfInput {
             if tok != input_tokens[index] {
                 return Err(format!(
-                    "Wanted {:?} but got {:?}",
+                    "Wanted {:?} BUT got {:?}",
                     input_tokens[index], tok
                 ));
             }

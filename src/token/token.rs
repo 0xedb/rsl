@@ -17,7 +17,7 @@ pub enum Token {
     Invalid(TokenError),
 
     // identifiers + literals
-    Identifier,
+    Identifier(String),
     Integer(IntegerKind),
 
     // operators
