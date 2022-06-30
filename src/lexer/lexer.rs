@@ -1,4 +1,4 @@
-use crate::token::{self, literal, Token};
+use crate::token::{literal, Token};
 
 #[derive(Debug, Default)]
 pub struct Lexer<'a> {
@@ -31,10 +31,18 @@ impl<'a> Lexer<'a> {
         self.next += 1;
     }
 
-    fn next_token(&mut self) {
+    fn eat_whitespace(&mut self) {
+        while self.ch == '\t' || self.ch == ' ' || self.ch == '\n' || self.ch == '\r' {
+            self.read_char();
+        }
+    }
+
+    fn next_token(&mut self) -> Token {
         use literal::*;
 
         let mut tok = Token::default();
+
+        self.eat_whitespace();
 
         match self.ch {
             Plus => tok = Token::Plus,
@@ -49,17 +57,46 @@ impl<'a> Lexer<'a> {
             EndOfInput => (),
             _ => (),
         }
+
+        self.read_char();
+
+        tok
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::token::Token::*;
+
     use super::Lexer;
 
     #[test]
-    fn hello() -> Result<(), ()> {
-        let lex = Lexer::new("hello world");
-        println!("{lex:?}");
+    fn test_lexer() -> Result<(), String> {
+        let mut lx = Lexer::new(
+            r#"
+                =+(){},;
+            "#,
+        );
+
+        let input_tokens = vec![
+            Assign, Plus, LeftParen, RightParen, LeftCurly, RightCurly, Comma, Semicolon,
+            EndOfInput,
+        ];
+
+        let mut index = 0;
+        let mut tok = lx.next_token();
+
+        while tok != EndOfInput {
+            if tok != input_tokens[index] {
+                return Err(format!(
+                    "Wanted {:?} but got {:?}",
+                    input_tokens[index], tok
+                ));
+            }
+
+            index += 1;
+            tok = lx.next_token();
+        }
 
         Ok(())
     }

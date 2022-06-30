@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum IntegerKind {
     Binary,
     Octal,
@@ -6,12 +6,12 @@ pub enum IntegerKind {
     HexaDecimal,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum TokenError {
     Unknown,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Token {
     EndOfInput,
     Invalid(TokenError),
