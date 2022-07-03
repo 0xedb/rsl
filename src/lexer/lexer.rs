@@ -62,6 +62,12 @@ impl<'a> Lexer<'a> {
 
         match self.ch {
             literal::Plus => tok = Token::Plus,
+            literal::Minus => tok = Token::Minus,
+            literal::Slash => tok = Token::Slash,
+            literal::Star => tok = Token::Star,
+            literal::Exclamation => tok = Token::Exclamation,
+            literal::Gt => tok = Token::Gt,
+            literal::Lt => tok = Token::Lt,
             literal::Comma => tok = Token::Comma,
             literal::Assign => tok = Token::Assign,
             literal::Semicolon => tok = Token::Semicolon,

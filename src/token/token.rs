@@ -6,6 +6,12 @@ pub enum IntegerKind {
     HexaDecimal,
 }
 
+impl Default for IntegerKind {
+    fn default() -> Self {
+        Self::Decimal
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum TokenError {
     Unknown,
@@ -23,6 +29,15 @@ pub enum Token {
     // operators
     Assign,
     Plus,
+    Minus,
+    Slash,
+    Star,
+    Exclamation,
+
+    Gt,
+    Lt,
+
+    Equal,
 
     // delimiters
     Comma,
@@ -34,7 +49,13 @@ pub enum Token {
     RightParen,
 
     // keywords
+    If,
+    Else,
+    Elif,
+    True,
+    False,
     Let,
+    Return,
     Function,
 }
 
