@@ -1,4 +1,4 @@
-use crate::token::{literal, Token};
+use crate::token::{literal, IntegerKind, Token};
 
 #[derive(Debug, Default)]
 pub struct Lexer<'a> {
@@ -32,9 +32,14 @@ impl<'a> Lexer<'a> {
     }
 
     fn eat_whitespace(&mut self) {
-        while self.ch == '\t' || self.ch == ' ' || self.ch == '\n' || self.ch == '\r' {
+        let mut cur = self.input.chars().nth(self.current).unwrap();
+
+        while cur == '\t' || cur == ' ' || cur == '\n' || cur == '\r' {
             self.read_char();
+            cur = self.input.chars().nth(self.current).unwrap();
         }
+
+        self.ch = self.input.chars().nth(self.current).unwrap()
     }
 
     fn is_letter(ch: char) -> bool {
@@ -52,36 +57,64 @@ impl<'a> Lexer<'a> {
     }
 
     fn is_digit(ch: char) -> bool {
-        ch >= '0' && ch <= '9'
+        ch >= '0' && ch <= '9' || Self::is_letter(ch)
+    }
+
+    fn read_digit(&mut self) -> &str {
+        let pos: usize = self.current;
+
+        while Lexer::is_digit(self.input.chars().nth(self.current).unwrap()) {
+            self.read_char()
+        }
+
+        &self.input[pos..self.current]
+    }
+
+    fn peek_next_char(&self) -> char {
+        if self.next >= self.input.len() {
+            literal::Invalid
+        } else {
+            self.input.chars().nth(self.next).unwrap()
+        }
     }
 
     fn next_token(&mut self) -> Token {
         let mut tok = Token::default();
 
         self.eat_whitespace();
-
         match self.ch {
+            literal::Gt => tok = Token::Gt,
+            literal::Lt => tok = Token::Lt,
+            literal::Star => tok = Token::Star,
             literal::Plus => tok = Token::Plus,
             literal::Minus => tok = Token::Minus,
             literal::Slash => tok = Token::Slash,
-            literal::Star => tok = Token::Star,
-            literal::Exclamation => tok = Token::Exclamation,
-            literal::Gt => tok = Token::Gt,
-            literal::Lt => tok = Token::Lt,
             literal::Comma => tok = Token::Comma,
-            literal::Assign => tok = Token::Assign,
-            literal::Semicolon => tok = Token::Semicolon,
             literal::LeftCurly => tok = Token::LeftCurly,
-            literal::RightCurly => tok = Token::RightCurly,
+            literal::Semicolon => tok = Token::Semicolon,
             literal::LeftParen => tok = Token::LeftParen,
+            literal::RightCurly => tok = Token::RightCurly,
             literal::RightParen => tok = Token::RightParen,
-            literal::EndOfInput => (),
+            literal::EndOfInput => tok = Token::EndOfInput,
+            literal::Assign => {
+                tok = if self.peek_next_char() == literal::Assign {
+                    Token::Equal
+                } else {
+                    Token::Assign
+                }
+            }
+            literal::Exclamation => {
+                tok = if self.peek_next_char() == literal::Assign {
+                    Token::NotEqual
+                } else {
+                    Token::Exclamation
+                }
+            }
             ch => {
                 if Lexer::is_letter(ch) {
-                    let identifier = self.read_identifier();
-
-                    tok = Token::Identifier(identifier.to_owned());
+                    tok = Token::get_keyword(self.read_identifier().to_owned());
                 } else if Lexer::is_digit(ch) {
+                    tok = Token::Integer(IntegerKind::get_kind(self.read_digit()));
                 }
             }
         }
@@ -94,42 +127,60 @@ impl<'a> Lexer<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::token::Token::*;
+    use crate::token::{IntegerKind::*, Token::*};
 
     use super::Lexer;
 
     #[test]
     fn test_lexer() -> Result<(), String> {
         let mut lx = Lexer::new(
-            r#"let
-                =+(){},;
+            r#"
+                    let five = 5;
+                    let ten = 10;
+                    let add = fn(x, y) {
+                    x + y;
+                    };
+                    let result = add(five, ten);
+                    !-/*5;
+                    5 < 10 > 5;
+                    if (5 < 10) {
+                    return true;
+                    } else {
+                    return false;
+                    }
+                    10 == 10;
+                    10 != 9;
             "#,
         );
 
         let input_tokens = vec![
-            Identifier(String::from("let")),
+            Let,
+            Identifier(String::from("five")),
             Assign,
-            Plus,
-            LeftParen,
-            RightParen,
-            LeftCurly,
-            RightCurly,
-            Comma,
+            Integer(Decimal),
             Semicolon,
-            EndOfInput,
+            Let,
+            Identifier(String::from("ten")),
+            Equal,
+            Integer(Decimal),
         ];
 
         let mut index = 0;
         let mut tok = lx.next_token();
 
+        let mut msg: String;
+
         while tok != EndOfInput {
+            msg = format!(
+                "TEST #{index}: Wanted {:?} Got {:?}",
+                input_tokens[index], tok
+            );
+
             if tok != input_tokens[index] {
-                return Err(format!(
-                    "Wanted {:?} BUT got {:?}",
-                    input_tokens[index], tok
-                ));
+                return Err(msg);
             }
 
+            println!("{msg}");
             index += 1;
             tok = lx.next_token();
         }

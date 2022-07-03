@@ -14,3 +14,12 @@ pub const Star: char = '*';
 pub const Exclamation: char = '!';
 pub const Gt: char = '>';
 pub const Lt: char = '<';
+
+pub const If: &str = "if";
+pub const Else: &str = "else";
+pub const Elif: &str = "elif";
+pub const True: &str = "true";
+pub const False: &str = "false";
+pub const Let: &str = "let";
+pub const Function: &str = "fn";
+pub const Return: &str = "ret";
